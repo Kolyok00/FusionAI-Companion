@@ -1,1 +1,58 @@
 # Konfigurációs fájl
+
+# GarvisNeuralMind Configuration
+app:
+  name: "GarvisNeuralMind"
+  version: "2.0.0"
+  debug: true
+  host: "0.0.0.0"
+  port: 8000
+
+# AI Model Configuration
+ai_models:
+  openrouter:
+    api_key: "${OPENROUTER_API_KEY}"
+    base_url: "https://openrouter.ai/api/v1"
+    default_model: "deepseek/deepseek-r1"
+  
+  google_ai:
+    api_key: "${GOOGLE_AI_API_KEY}"
+    default_model: "gemini-pro"
+  
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    default_model: "gpt-4"
+
+# Memory and Storage
+storage:
+  redis:
+    host: "localhost"
+    port: 6379
+    password: "${REDIS_PASSWORD}"
+    db: 0
+  
+  postgresql:
+    host: "localhost"
+    port: 5432
+    database: "garvis_neural_mind"
+    username: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+  
+  pinecone:
+    api_key: "${PINECONE_API_KEY}"
+    environment: "us-west1-gcp-free"
+    index_name: "garvis-memory"
+
+# Features
+features:
+  voice_interaction: true
+  browser_control: true
+  code_assistance: true
+  memory_persistence: true
+  fine_tuning: true
+
+# Logging
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}"
+  file: "logs/garvis.log"

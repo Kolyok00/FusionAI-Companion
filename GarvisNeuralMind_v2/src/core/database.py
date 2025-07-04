@@ -8,7 +8,7 @@ from typing import Optional, List
 
 from sqlalchemy import (
     Boolean, Column, Integer, String, Text, DateTime, ForeignKey, 
-    JSON, Float, UniqueConstraint, Index, create_engine
+    JSON, Float, UniqueConstraint, Index, create_engine, text, select
 )
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
@@ -22,10 +22,14 @@ Base = declarative_base()
 
 # Async engine and session
 settings = get_settings()
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+
 async_engine = create_async_engine(
-    settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
+    database_url,
     echo=settings.DEBUG,
-    pool_size=20,
+    pool_size=20 if not database_url.startswith("sqlite") else 5,
     max_overflow=0
 )
 
@@ -278,19 +282,12 @@ async def create_initial_data():
     """Create initial community data."""
     async with AsyncSessionLocal() as session:
         # Check if we already have data
-        result = await session.execute("SELECT COUNT(*) FROM users")
+        result = await session.execute(select(func.count(User.id)))
         user_count = result.scalar()
         
         if user_count == 0:
-            # Create default community
-            default_community = Community(
-                name="general",
-                description="Általános beszélgetések a GarvisNeuralMind community-ben",
-                is_public=True,
-                creator_id=1  # Will be created by first user
-            )
-            session.add(default_community)
-            await session.commit()
+            # Create default community - will be created when first user registers
+            pass
 
 
 # Redis operations for caching and real-time features

@@ -1,1 +1,141 @@
-# Docker futtatási konfiguráció
+# GarvisNeuralMind v2 - Docker Compose Configuration
+version: '3.8'
+
+services:
+  # Main Application
+  garvis-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: garvis-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://garvis:garvis_pass@postgres:5432/garvis_db
+      - REDIS_URL=redis://redis:6379
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - garvis-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: garvis-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=garvis_db
+      - POSTGRES_USER=garvis
+      - POSTGRES_PASSWORD=garvis_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    networks:
+      - garvis-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U garvis -d garvis_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: garvis-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - garvis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Development Environment (Optional)
+  garvis-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: garvis-dev
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://garvis:garvis_pass@postgres:5432/garvis_db
+      - REDIS_URL=redis://redis:6379
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=true
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+      - /app/venv
+    networks:
+      - garvis-network
+    profiles:
+      - dev
+
+  # GPU-enabled service (Optional)
+  garvis-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: gpu
+    container_name: garvis-gpu
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://garvis:garvis_pass@postgres:5432/garvis_db
+      - REDIS_URL=redis://redis:6379
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - garvis-network
+    profiles:
+      - gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+networks:
+  garvis-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

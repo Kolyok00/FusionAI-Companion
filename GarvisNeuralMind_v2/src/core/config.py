@@ -6,7 +6,8 @@ import os
 from functools import lru_cache
 from typing import List, Optional
 
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -29,7 +30,7 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str = Field(
-        default="postgresql://postgres:password@localhost/garvisneuralmind",
+        default="sqlite+aiosqlite:///./garvisneuralmind.db",
         env="DATABASE_URL"
     )
     REDIS_URL: str = Field(default="redis://localhost:6379", env="REDIS_URL")

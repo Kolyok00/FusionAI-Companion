@@ -29,7 +29,7 @@ async def get_communities(current_user: User = Depends(get_current_user)):
 
 
 @router.get("/{community_id}", response_model=CommunityResponse)
-async def get_community(community_id: int, current_user: User = Depends(get_current_user)):
+async def get_community(_community_id: int, _current_user: User = Depends(get_current_user)):
     """Get community by ID."""
     # Stub implementation
     raise HTTPException(status_code=404, detail="Community not found")

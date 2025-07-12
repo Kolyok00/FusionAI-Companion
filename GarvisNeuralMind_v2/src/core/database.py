@@ -8,7 +8,7 @@ from typing import Optional, List
 
 from sqlalchemy import (
     Boolean, Column, Integer, String, Text, DateTime, ForeignKey, 
-    JSON, Float, UniqueConstraint, Index, create_engine, text, select
+    JSON, Float, UniqueConstraint, Index, create_engine, text, select, func
 )
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
